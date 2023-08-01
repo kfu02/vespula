@@ -8,15 +8,18 @@ C++, without the overhead of ROS. Designed to be compatible with Mac and Linux
 ## Running
 
 0. Install [meson](https://mesonbuild.com/Getting-meson.html).
-1. Build Vespula: `mkdir build && cd build && meson build`
-2. Run Vespula: `./vespula`
+1. Build: `meson build`
+2. Compile: `cd build && meson compile`
+3. Run: `./vespula`
+
+After the first build, meson will automatically update the build configuration when you modify the meson.build file. So you can start from step 2 above.
 
 Note: currently there is no UI because I didn't want to learn QT/some other GUI
 platform for C++.
 
 **Expected Behavior:** TODO
 
-## (Opinionated) Design Choices
+## Design Choices
 
 I use [cpp-channel](https://github.com/andreiavrammsd/cpp-channel) for
 inter-node communication because it is thread-safe, header-only, and I liked

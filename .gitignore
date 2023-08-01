@@ -1,3 +1,7 @@
+# Meson
+build/
+.cache/
+
 # Prerequisites
 *.d
 
