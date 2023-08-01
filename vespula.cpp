@@ -1,19 +1,23 @@
 #include <stdio.h>
 #include <thread>
+#include "concurrentqueue.h"
 
 #define PROJECT_NAME "vespula"
 
 int main(int argc, char **argv) {
-    if(argc != 1) {
-        printf("%s takes no arguments.\n", argv[0]);
-        return 1;
-    }
-
+    // example thread
     std::thread t([]() {
         printf("This is a thread.\n");
     });
     t.join();
 
-    printf("This is project %s.\n", PROJECT_NAME);
+    moodycamel::ConcurrentQueue<int> q;
+    q.enqueue(25);
+
+    int item;
+    bool found = q.try_dequeue(item);
+    printf("Found: %d\n", found);
+    printf("Item: %d\n", item);
+
     return 0;
 }

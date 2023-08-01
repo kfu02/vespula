@@ -8,11 +8,12 @@ C++, without the overhead of ROS. Designed to be compatible with Mac and Linux
 ## Running
 
 0. Install [meson](https://mesonbuild.com/Getting-meson.html).
-1. Build: `meson build`
-2. Compile: `cd build && meson compile`
-3. Run: `./vespula`
+1. Install subprojects: `chmod +x install.sh && ./install.sh`
+2. Build: `meson setup build`
+3. Compile: `cd build && meson compile`
+4. Run: `./vespula`
 
-After the first build, meson will automatically update the build configuration when you modify the meson.build file. So you can start from step 2 above.
+After the first build, meson will automatically update the build configuration when you modify the meson.build file. So you can start from "Compile".
 
 Note: currently there is no UI because I didn't want to learn QT/some other GUI
 platform for C++.
@@ -21,12 +22,12 @@ platform for C++.
 
 ## Design Choices
 
-I use [cpp-channel](https://github.com/andreiavrammsd/cpp-channel) for
+I use [concurrentqueue](https://github.com/cameron314/concurrentqueue) for
 inter-node communication because it is thread-safe, header-only, and I liked
 the syntax. This allows nodes to live on threads (or the same one) and still
 communicate. There are other ways to achieve this, like Boost's
 signals-and-slots or rolling a custom mutex-locked data object, but I felt more
-comfortable with the channel syntax coming from ROS.
+comfortable with this syntax coming from ROS. Moreover, this package was easy to install with Meson.
 
 ### Node Organization
 
@@ -81,7 +82,7 @@ requires an internet connection. At RoboCup this may not be feasible.
 Thus, Meson. It is CMake-like in that you create a `build/` folder, then run
 the tool, then run some executable, but has modern
 [documentation](https://mesonbuild.com/) and an
-easy-to-learn syntax.
+easy-to-learn syntax (which is almost Python but not quite).
 
 ### External libaries
 

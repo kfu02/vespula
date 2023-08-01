@@ -1,6 +1,7 @@
 # Meson
 build/
 .cache/
+subprojects/
 
 # Prerequisites
 *.d
