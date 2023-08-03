@@ -9,13 +9,23 @@ project('vespula', 'cpp',
 thread_dep = dependency('threads')
 add_global_arguments('-std=c++17', language : 'cpp')
 
-# add concurrent queue
-concurrent_queue_dep = dependency('concurrentqueue')
+# make include/ available
+communication_inc = include_directories('include')
 
-# create an executable called 'vespula'
-exe = executable('vespula', 'vespula.cpp',
-  dependencies : [thread_dep, concurrent_queue_dep],
+# add communication as a library
+communication_sources = ['src/topic.cpp', 'src/node.cpp']  # TODO: main.cpp shouldn't be here, the comm should be a standalone lib
+communication_lib = static_library('communication',
+                            communication_sources,
+                            include_directories : communication_inc,
+                            dependencies : thread_dep,
+                            install : true)
+
+communication_dep = declare_dependency(link_with : communication_lib, include_directories : communication_inc)
+
+# create an executable called 'vespula' with entry point src/main.cpp
+exe = executable('vespula', 'src/main.cpp',
+  dependencies : communication_dep,
   install : true)
 
-# TODO: add real tests
-test('basic', exe)
+# TODO: add real tests in standalone tests/ dir
+# test('basic', exe)

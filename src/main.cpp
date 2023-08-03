@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <thread>
 #include "concurrentqueue.h"
+#include "readerwriterqueue.h"
 
 #define PROJECT_NAME "vespula"
 
