@@ -7,13 +7,17 @@ C++, without the overhead of ROS. Designed to be compatible with Mac and Linux
 
 ## Running
 
+(All the commands below should be run from the same level of this directory as this README.)
+
 0. Install [meson](https://mesonbuild.com/Getting-meson.html).
 1. Install subprojects: `chmod +x install.sh && ./install.sh`
 2. Build: `meson setup build`
-3. Compile: `cd build && meson compile`
-4. Run: `./vespula`
+3. Test: `(cd build && meson test -v)`
+4. Compile: `(cd build && meson compile)`
+5. Run: `./build/vespula`
 
-After the first build, meson will automatically update the build configuration when you modify the meson.build file. So you can start from "Compile".
+After the first build, meson will automatically update the build configuration
+when you modify the meson.build file, so you can start from "Compile".
 
 Note: currently there is no UI because I didn't want to learn QT/some other GUI
 platform for C++.

@@ -27,5 +27,5 @@ exe = executable('vespula', 'src/main.cpp',
   dependencies : communication_dep,
   install : true)
 
-# TODO: add real tests in standalone tests/ dir
-# test('basic', exe)
+# handle building + running all tests
+subdir('test')
