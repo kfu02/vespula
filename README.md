@@ -5,6 +5,11 @@ A prototype software stack for controlling a RoboCup SSL team's robots (or
 C++, without the overhead of ROS. Designed to be compatible with Mac and Linux
 (I can't personally test on Windows).
 
+## TODO:
+
+add linter: cpplint (pip3 install cpplint)
+and code formatter: clang-format (installed by default)
+
 ## Running
 
 (All the commands below should be run from the same level of this directory as this README.)
