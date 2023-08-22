@@ -4,7 +4,7 @@
 #include "readerwriterqueue.h"
 
 #include "topic.h"
-#include "int_node.h"
+#include "int_pub_node.h"
 
 #define PROJECT_NAME "vespula"
 

@@ -13,7 +13,7 @@ add_global_arguments('-std=c++17', language : 'cpp')
 communication_inc = include_directories('include')
 
 # add communication as a library
-communication_sources = ['src/int_node.cpp']
+communication_sources = ['src/int_pub_node.cpp', 'src/int_sub_node.cpp']
 communication_lib = library('communication',
                             communication_sources,
                             include_directories : communication_inc,

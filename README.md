@@ -9,6 +9,7 @@ C++, without the overhead of ROS. Designed to be compatible with Mac and Linux
 
 add linter: cpplint (pip3 install cpplint)
 and code formatter: clang-format (installed by default)
+(do what RC-SW already has, with the git diff thing)
 
 ## Running
 

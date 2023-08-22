@@ -21,7 +21,7 @@ private:
 
   std::vector<std::string> publisher_names_;
 
-  std::vector<moodycamel::ReaderWriterQueue<T>> subscriber_queues_;
+  std::vector<std::shared_ptr<moodycamel::ReaderWriterQueue<T>>> subscriber_queues_;
   std::vector<std::string> subscriber_names_;
 
   std::string topic_name_;
@@ -35,7 +35,8 @@ public:
   std::shared_ptr<moodycamel::ConcurrentQueue<T>>
   add_publisher(const Node &publisher);
 
-  moodycamel::ReaderWriterQueue<T> &add_subscriber(const Node &subscriber);
+  std::shared_ptr<moodycamel::ReaderWriterQueue<T>>
+  add_subscriber(const Node &subscriber);
 
   std::thread loop();
 
@@ -60,10 +61,11 @@ Topic<T>::add_publisher(const Node &publisher) {
 }
 
 template <typename T>
-moodycamel::ReaderWriterQueue<T> &
+std::shared_ptr<moodycamel::ReaderWriterQueue<T>>
 Topic<T>::add_subscriber(const Node &subscriber) {
   subscriber_names_.push_back(subscriber.name());
-  moodycamel::ReaderWriterQueue<T> new_subscriber_queue;
+  auto new_subscriber_queue =
+      std::make_shared<moodycamel::ReaderWriterQueue<T>>();
   subscriber_queues_.push_back(new_subscriber_queue);
   return new_subscriber_queue;
 }
@@ -76,13 +78,15 @@ template <typename T> std::thread Topic<T>::loop() {
       T message;
       bool new_message_arrived = publisher_queue_->try_dequeue(message);
       if (new_message_arrived) {
-        printf("new_message_arrived\n");
         if (debug_) {
+          // TODO: clean debug prints?
+          printf("new_message_arrived\n");
           std::cout << std::to_string(message) << std::endl;
         }
 
         for (auto &subscriber_queue : subscriber_queues_) {
-          subscriber_queue.enqueue(message);
+          // TODO: docs say there should be wait_enqueue()?
+          subscriber_queue->enqueue(message);
         }
       }
 
