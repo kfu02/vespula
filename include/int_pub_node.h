@@ -4,6 +4,7 @@
 #include <vector>
 #include <algorithm>
 #include <ctime>
+#include <atomic>
 
 #include "node.h"
 #include "topic.h"
@@ -26,15 +27,17 @@ private:
    */
   std::vector<int> generate_random_nums(int size);
 
+  std::atomic_bool kill_signal_{false};
+
 public:
   IntPublisherNode(std::string name, int tick_rate, Topic<int> &pub_topic, int num_ints);
   ~IntPublisherNode();
 
   const std::string &name() const override;
-  const int &tick_rate() const override;
 
   void setup() override;
-  std::thread loop() override;
+  void loop() override;
+  void kill() override;
 
   std::vector<int> &get_planned_send();
 };

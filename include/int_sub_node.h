@@ -22,16 +22,18 @@ private:
   std::vector<int> expected_;
 
   bool done_;
+  std::atomic_bool kill_signal_{false};
 
 public:
   IntSubscriberNode(std::string name, int tick_rate, Topic<int> &sub_topic);
   ~IntSubscriberNode();
 
   const std::string &name() const override;
-  const int &tick_rate() const override;
+  const int &tick_rate() const;
 
   void setup() override;
-  std::thread loop() override;
+  void loop() override;
+  void kill() override;
 
   std::vector<int> &get_received();
 

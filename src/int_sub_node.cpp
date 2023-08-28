@@ -22,12 +22,16 @@ const int &IntSubscriberNode::tick_rate() const { return tick_rate_; }
 void IntSubscriberNode::setup() {
 }
 
-std::thread IntSubscriberNode::loop() {
+void IntSubscriberNode::loop() {
   // TODO: ensure this can only be called once per thread, make private + put in
   // the constructor
   std::thread loop_thread([this]() {
     // TODO: replace w/ limited loop
     while (true) {
+      if (kill_signal_) {
+        return;
+      }
+
       // TODO: need to lock weak_ptr to get shared_ptr, see int_pub_node.cpp
       std::shared_ptr<moodycamel::ReaderWriterQueue<int>> shared_sub_queue =
           sub_queue_.lock();
@@ -35,12 +39,6 @@ std::thread IntSubscriberNode::loop() {
       if (!shared_sub_queue) {
         printf("ERROR: SUB QUEUE INVALID");
         break;
-      }
-
-      // this doesn't work b/c expected is always 0, the lamba capture copies this object 
-      if (expected_.size() > 0) {
-        std::cout << (expected_ == received_) << std::endl;
-        printf("done");
       }
 
       int message;
@@ -55,8 +53,7 @@ std::thread IntSubscriberNode::loop() {
           std::chrono::milliseconds((int)(1000.0 / tick_rate_)));
     }
   });
-  loop_thread.join();
-  return loop_thread;
+  loop_thread.detach();
 }
 
 std::vector<int> &IntSubscriberNode::get_received() {
@@ -75,4 +72,8 @@ bool IntSubscriberNode::done() const {
   // why does checking here not work? b/c lambda captures copy
   // std::cout << "done: " << received_.size() << std::endl;
   return expected_ == received_;
+}
+
+void IntSubscriberNode::kill() {
+  kill_signal_ = true;
 }

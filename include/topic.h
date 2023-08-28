@@ -26,6 +26,7 @@ private:
 
   std::string topic_name_;
   bool debug_;
+  std::atomic_bool kill_signal_{false};
 
 public:
   Topic(std::string topic_name);
@@ -38,7 +39,8 @@ public:
   std::shared_ptr<moodycamel::ReaderWriterQueue<T>>
   add_subscriber(const Node &subscriber);
 
-  std::thread loop();
+  void loop();
+  void kill();
 
   std::string debug();
 };
@@ -70,11 +72,15 @@ Topic<T>::add_subscriber(const Node &subscriber) {
   return new_subscriber_queue;
 }
 
-template <typename T> std::thread Topic<T>::loop() {
+template <typename T> void Topic<T>::loop() {
   // TODO: ensure this can only be called once per thread, make private + put in
   // the constructor
   std::thread loop_thread([this]() {
     while (true) {
+      if (kill_signal_) {
+        return;
+      }
+
       T message;
       bool new_message_arrived = publisher_queue_->try_dequeue(message);
       if (new_message_arrived) {
@@ -95,7 +101,7 @@ template <typename T> std::thread Topic<T>::loop() {
     }
   });
 
-  return loop_thread;
+  loop_thread.detach();
 }
 
 template <typename T> std::string Topic<T>::debug() {
@@ -104,3 +110,7 @@ template <typename T> std::string Topic<T>::debug() {
   return topic_name_;
 }
 // TODO: un-debug?
+
+template <typename T> void Topic<T>::kill() {
+  kill_signal_ = true;
+}

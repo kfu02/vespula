@@ -23,23 +23,21 @@ std::vector<int> IntPublisherNode::generate_random_nums(int size) {
 
 const std::string &IntPublisherNode::name() const { return name_; }
 
-const int &IntPublisherNode::tick_rate() const { return tick_rate_; }
-
 void IntPublisherNode::setup() {
   // TODO: RNG some numbers, make it possible to access from the outside
 }
 
-std::thread IntPublisherNode::loop() {
+void IntPublisherNode::loop() {
   // TODO: ensure this can only be called once per thread, make private + put in
   // the constructor
   std::thread loop_thread([this]() {
+      // TODO: should loop inf?
     for (const int &i : planned_send_) {
       std::shared_ptr<moodycamel::ConcurrentQueue<int>> shared_pub_queue =
           pub_queue_.lock();
 
       if (!shared_pub_queue) {
         // queue no longer valid
-        printf("invalid queue\n");
         break;
       }
 
@@ -51,11 +49,20 @@ std::thread IntPublisherNode::loop() {
 
       std::this_thread::sleep_for(
           std::chrono::milliseconds((int)(1000.0 / tick_rate_)));
+      if (kill_signal_) {
+        printf("INT PUB NODE KILLED");
+        return;
+      }
     }
   });
-  return loop_thread;
+
+  loop_thread.detach();
 }
 
 std::vector<int> &IntPublisherNode::get_planned_send() {
   return planned_send_;
+}
+
+void IntPublisherNode::kill() {
+  kill_signal_ = true;
 }
