@@ -33,7 +33,6 @@ TEST(TopicTest, SinglePubSub) {
 
   const int tick_rate_hz = 10;
   const int num_ints = 10;
-  std::atomic_bool kill_signal = false;
   IntPublisherNode int_pub_node =
       IntPublisherNode("int_pub_node", tick_rate_hz, int_topic, num_ints);
 
@@ -75,5 +74,30 @@ TEST(TopicTest, SinglePubSub) {
   ASSERT_EQ(received, expected);
 }
 
-// TODO: add separate test for killing nodes/topics
-// TODO: add test for MultiPubMultiSub
+TEST(TopicTest, KillNodeLoop) {
+  std::string topic_name = "int_topic";
+  Topic<int> int_topic = Topic<int>(topic_name);
+  // int_topic.debug();
+
+  int tick_rate_hz = 10;
+  IntPublisherNode int_pub_node =
+      IntPublisherNode("int_pub_node", tick_rate_hz, int_topic, 10);
+
+  IntSubscriberNode int_sub_node =
+      IntSubscriberNode("int_sub_node", 10, int_topic);
+
+  int_topic.loop();
+  int_pub_node.loop();
+  int_sub_node.loop();
+
+  std::this_thread::sleep_for(std::chrono::milliseconds(50));
+
+  int_topic.kill();
+  int_pub_node.kill();
+  int_sub_node.kill();
+
+  // by killing in < 100ms, sub should have received nothing
+  ASSERT_EQ(int_sub_node.get_received().size(), 0);
+}
+
+// TODO: add test for MultiPubMultiSub (requires writing a more general Node which takes vectors of pub/sub nodes)
