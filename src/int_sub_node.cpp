@@ -45,8 +45,7 @@ void IntSubscriberNode::loop() {
       bool new_message_arrived = shared_sub_queue->try_dequeue(message);
       if (new_message_arrived) {
         received_.push_back(message);
-        std::cout << name_ << " received: " << std::to_string(message) << std::endl;
-        // std::cout << "recv: " << received_.size() << std::endl;
+        // std::cout << name_ << " received: " << std::to_string(message) << std::endl;
       }
 
       std::this_thread::sleep_for(
@@ -58,20 +57,6 @@ void IntSubscriberNode::loop() {
 
 std::vector<int> &IntSubscriberNode::get_received() {
   return received_;
-}
-
-void IntSubscriberNode::set_expected(std::vector<int> expected) {
-  expected_ = expected;
-}
-
-bool IntSubscriberNode::done() const {
-  // for (int i : expected_) {
-  //   std::cout << i << std::endl;
-  // }
-  
-  // why does checking here not work? b/c lambda captures copy
-  // std::cout << "done: " << received_.size() << std::endl;
-  return expected_ == received_;
 }
 
 void IntSubscriberNode::kill() {

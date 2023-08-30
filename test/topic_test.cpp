@@ -21,12 +21,17 @@ TEST(TopicTest, Debug) {
   ASSERT_EQ(debug_status, topic_name);
 }
 
+/*
+ * IntPublisherNode sends 10 random ints to IntSubscriberNode via int_topic. 
+ *
+ * Tick rate is set to 10 hz, so this should take around 1 second.
+ */
 TEST(TopicTest, SinglePubSub) {
   std::string topic_name = "int_topic";
   Topic<int> int_topic = Topic<int>(topic_name);
   // int_topic.debug();
 
-  const int tick_rate_hz = 1;
+  const int tick_rate_hz = 10;
   const int num_ints = 10;
   std::atomic_bool kill_signal = false;
   IntPublisherNode int_pub_node =
@@ -35,23 +40,40 @@ TEST(TopicTest, SinglePubSub) {
   IntSubscriberNode int_sub_node =
       IntSubscriberNode("int_sub_node", 10, int_topic);
 
-  // TODO: this should be in setup(), how to get setup more flexible?
+  // TODO: how to get setup more flexible?
   // call setup() thread, block for X seconds, send CV to break setup, then go
   // to loop() thread?
-  int_sub_node.set_expected(int_pub_node.get_planned_send());
 
-  // TODO: add sub to prove the pub/sub mechanism works
-  // e.g. pub 10 ints, sub to the topic
-  // once all 10 received, std::terminate() to kill all threads? or some way to
-  // kill the threads before timeout?
-  // exit(0);
   int_topic.loop();
   int_pub_node.loop();
   int_sub_node.loop();
 
-  // TODO: add separate test for killing nodes/topics
-  std::this_thread::sleep_for(std::chrono::seconds((int)(2)));
+  while (int_sub_node.get_received().size() < int_pub_node.get_planned_send().size()) {
+      std::this_thread::sleep_for(std::chrono::milliseconds(10));
+  }
+
   int_topic.kill();
   int_pub_node.kill();
   int_sub_node.kill();
+
+  // notice the data still persists even after the node is "killed"
+  // TODO: should I make a way to restart node? would be as simple as changing
+  // "break" to "continue" in the "killed" if statement
+  std::vector<int> &received = int_sub_node.get_received();
+  std::vector<int> &expected = int_pub_node.get_planned_send();
+
+  printf("Pub sent: ");
+  for (const int &i : expected) {
+    printf("%d, ", i);
+  }
+  printf("\nSub received: ");
+  for (const int &i : received) {
+    printf("%d, ", i);
+  }
+  printf("\n");
+
+  ASSERT_EQ(received, expected);
 }
+
+// TODO: add separate test for killing nodes/topics
+// TODO: add test for MultiPubMultiSub

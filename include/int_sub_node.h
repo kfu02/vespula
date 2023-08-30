@@ -17,9 +17,7 @@ private:
 
   std::weak_ptr<moodycamel::ReaderWriterQueue<int>> sub_queue_;
 
-  // TODO: thread safe these vectors? if read-only after set it's not wrong, but...?
   std::vector<int> received_;
-  std::vector<int> expected_;
 
   bool done_;
   std::atomic_bool kill_signal_{false};
@@ -35,8 +33,6 @@ public:
   void loop() override;
   void kill() override;
 
+  // TODO: maybe is better design to read-only from Node methods?
   std::vector<int> &get_received();
-
-  void set_expected(std::vector<int> expected);
-  bool done() const;
 };

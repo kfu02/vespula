@@ -41,11 +41,8 @@ void IntPublisherNode::loop() {
         break;
       }
 
-      std::cout << name_ << " published: " << i << std::endl;
+      // std::cout << name_ << " published: " << i << std::endl;
       shared_pub_queue->enqueue(i);
-      // int out = 0;
-      // shared_pub_queue->try_dequeue(out);
-      // printf("out: %d\n", out);
 
       std::this_thread::sleep_for(
           std::chrono::milliseconds((int)(1000.0 / tick_rate_)));
