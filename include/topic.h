@@ -4,6 +4,7 @@
 #include <iostream>
 #include <vector>
 #include <string>
+#include <chrono>
 #include "concurrentqueue.h"
 #include "readerwriterqueue.h"
 
@@ -13,6 +14,11 @@ template <typename T>
 
 #define TOPIC_TICK_RATE 1000
 
+/*
+ * Handles communication between nodes with lock-free queues (courtesy of moodycamel).
+ *
+ * TODO explanation ehre
+ */
 class Topic {
 private:
   // shared_ptr only to allow Nodes to receive weak_ptrs from this class, Topic
@@ -21,7 +27,7 @@ private:
 
   std::vector<std::string> publisher_names_;
 
-  std::vector<std::shared_ptr<moodycamel::ReaderWriterQueue<T>>> subscriber_queues_;
+  std::vector<std::shared_ptr<moodycamel::ConcurrentQueue<T>>> subscriber_queues_;
   std::vector<std::string> subscriber_names_;
 
   std::string topic_name_;
@@ -36,7 +42,7 @@ public:
   std::shared_ptr<moodycamel::ConcurrentQueue<T>>
   add_publisher(const Node &publisher);
 
-  std::shared_ptr<moodycamel::ReaderWriterQueue<T>>
+  std::shared_ptr<moodycamel::ConcurrentQueue<T>>
   add_subscriber(const Node &subscriber);
 
   void loop();
@@ -63,20 +69,21 @@ Topic<T>::add_publisher(const Node &publisher) {
 }
 
 template <typename T>
-std::shared_ptr<moodycamel::ReaderWriterQueue<T>>
+std::shared_ptr<moodycamel::ConcurrentQueue<T>>
 Topic<T>::add_subscriber(const Node &subscriber) {
   subscriber_names_.push_back(subscriber.name());
   auto new_subscriber_queue =
-      std::make_shared<moodycamel::ReaderWriterQueue<T>>();
+      std::make_shared<moodycamel::ConcurrentQueue<T>>();
   subscriber_queues_.push_back(new_subscriber_queue);
   return new_subscriber_queue;
 }
 
 template <typename T> void Topic<T>::loop() {
-  // TODO: ensure this can only be called once per thread, make private + put in
-  // the constructor
   std::thread loop_thread([this]() {
     while (true) {
+      // Mark the time when the loop starts
+      auto loopStartTime = std::chrono::high_resolution_clock::now();
+
       if (kill_signal_) {
         return;
       }
@@ -91,13 +98,27 @@ template <typename T> void Topic<T>::loop() {
         }
 
         for (auto &subscriber_queue : subscriber_queues_) {
-          // TODO: docs say there should be wait_enqueue()?
           subscriber_queue->enqueue(message);
         }
       }
 
-      std::this_thread::sleep_for(
-          std::chrono::milliseconds((int)(1000.0 / TOPIC_TICK_RATE)));
+      // Calculate how much time has elapsed since the start of the loop
+      // auto loopEndTime = std::chrono::high_resolution_clock::now();
+      // auto elapsedMilliseconds = std::chrono::duration_cast<std::chrono::milliseconds>(loopEndTime - loopStartTime);
+      //
+      // // Check if at least 10 ms have elapsed
+      // if (elapsedMilliseconds < std::chrono::milliseconds(1)) {
+      //     // Calculate how much time to sleep to reach 1 ms
+      //     auto sleepDuration = std::chrono::milliseconds(1) - elapsedMilliseconds;
+      //     
+      //     // Sleep for the remaining time
+      //     std::this_thread::sleep_for(sleepDuration);
+      // } else {
+      //   printf("WARN: Topic tick rate is too slow to keep up with the incoming messages!");
+      // }
+
+      // std::this_thread::sleep_for(
+      //     std::chrono::milliseconds((int)(1000.0 / TOPIC_TICK_RATE)));
     }
   });
 

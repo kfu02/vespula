@@ -23,33 +23,54 @@ void IntSubscriberNode::setup() {
 }
 
 void IntSubscriberNode::loop() {
-  // TODO: ensure this can only be called once per thread, make private + put in
-  // the constructor
   std::thread loop_thread([this]() {
-    // TODO: replace w/ limited loop
+    int received = 0;
     while (true) {
+      // Mark the time when the loop starts
+      auto loopStartTime = std::chrono::high_resolution_clock::now();
+
       if (kill_signal_) {
         return;
       }
 
-      // TODO: need to lock weak_ptr to get shared_ptr, see int_pub_node.cpp
-      std::shared_ptr<moodycamel::ReaderWriterQueue<int>> shared_sub_queue =
+      std::shared_ptr<moodycamel::ConcurrentQueue<int>> shared_sub_queue =
           sub_queue_.lock();
 
       if (!shared_sub_queue) {
-        printf("ERROR: SUB QUEUE INVALID");
-        break;
+        continue;
       }
 
-      int message;
-      bool new_message_arrived = shared_sub_queue->try_dequeue(message);
-      if (new_message_arrived) {
-        received_.push_back(message);
-        // std::cout << name_ << " received: " << std::to_string(message) << std::endl;
+      int message[100];
+      size_t ct = shared_sub_queue->try_dequeue_bulk(message, 100);
+      // printf("received: %d\n", ct);
+      // std::cout << "test" << std::endl;
+
+      for (int i = 0; i < ct; i++) {
+        received_.push_back(message[i]);
       }
+      // if (new_message_arrived) {
+        // received_.push_back(message);
+        // received++;
+      // }
 
       std::this_thread::sleep_for(
           std::chrono::milliseconds((int)(1000.0 / tick_rate_)));
+      
+      // Calculate how much time has elapsed since the start of the loop
+      auto loopEndTime = std::chrono::high_resolution_clock::now();
+      auto elapsedMilliseconds = std::chrono::duration_cast<std::chrono::milliseconds>(loopEndTime - loopStartTime);
+
+      // Check if at least 10 ms have elapsed
+      if (elapsedMilliseconds < std::chrono::milliseconds((int)(1000.0 / tick_rate_))) {
+          // Calculate how much time to sleep to reach 10 ms
+          auto sleepDuration = std::chrono::milliseconds((int)(1000.0 / tick_rate_)) - elapsedMilliseconds;
+          
+          // Sleep for the remaining time
+          std::this_thread::sleep_for(sleepDuration);
+      } else {
+        // printf("WARN: sub tick rate is too slow to keep up with the incoming messages!");
+      }
+
     }
   });
   loop_thread.detach();

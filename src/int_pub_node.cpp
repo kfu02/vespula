@@ -33,6 +33,9 @@ void IntPublisherNode::loop() {
   std::thread loop_thread([this]() {
       // TODO: should loop inf?
     for (const int &i : planned_send_) {
+      // Mark the time when the loop starts
+      auto loopStartTime = std::chrono::high_resolution_clock::now();
+
       std::shared_ptr<moodycamel::ConcurrentQueue<int>> shared_pub_queue =
           pub_queue_.lock();
 
@@ -44,8 +47,26 @@ void IntPublisherNode::loop() {
       // std::cout << name_ << " published: " << i << std::endl;
       shared_pub_queue->enqueue(i);
 
-      std::this_thread::sleep_for(
-          std::chrono::milliseconds((int)(1000.0 / tick_rate_)));
+      // std::this_thread::sleep_for(
+      //     std::chrono::milliseconds((int)(1000.0 / tick_rate_)));
+      
+      // Calculate how much time has elapsed since the start of the loop
+      auto loopEndTime = std::chrono::high_resolution_clock::now();
+      auto elapsedMilliseconds = std::chrono::duration_cast<std::chrono::milliseconds>(loopEndTime - loopStartTime);
+
+      // Check if at least 10 ms have elapsed
+      if (elapsedMilliseconds < std::chrono::milliseconds((int)(1000.0 / tick_rate_))) {
+          // Calculate how much time to sleep to reach 10 ms
+          auto sleepDuration = std::chrono::milliseconds((int)(1000.0 / tick_rate_)) - elapsedMilliseconds;
+          
+          // Sleep for the remaining time
+          std::this_thread::sleep_for(sleepDuration);
+      } else {
+        // printf("WARN: pub tick rate is too slow to keep up with the incoming messages!");
+      }
+
+      // TODO: chatGPT says this might be good for compiler optimization:
+      // stopFlag.load(std::memory_order_relaxed)
       if (kill_signal_) {
         printf("INT PUB NODE KILLED");
         return;

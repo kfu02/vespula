@@ -5,7 +5,7 @@
 
 #include "node.h"
 #include "topic.h"
-#include "readerwriterqueue.h"
+#include "concurrentqueue.h"
 
 /*
  * TODO docs
@@ -15,7 +15,7 @@ private:
   std::string name_;
   int tick_rate_;
 
-  std::weak_ptr<moodycamel::ReaderWriterQueue<int>> sub_queue_;
+  std::weak_ptr<moodycamel::ConcurrentQueue<int>> sub_queue_;
 
   std::vector<int> received_;
 
